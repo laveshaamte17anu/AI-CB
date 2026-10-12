@@ -355,12 +355,63 @@ export default function App() {
 
   // --- SPEECH SYNTHESIS (TTS) ---
 
+  const cleanTextForSpeech = (rawText) => {
+    if (!rawText || typeof rawText !== 'string') return '';
+
+    let cleaned = rawText
+      // Remove fenced code blocks (```...```)
+      .replace(/```[\s\S]*?```/g, ' ')
+      // Remove inline code snippets (`code`)
+      .replace(/`([^`]+)`/g, '$1')
+      // Remove Markdown images ![alt](url)
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+      // Replace Markdown links [text](url) with just 'text'
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      // Remove raw URLs so TTS doesn't spell out http/https
+      .replace(/https?:\/\/\S+/gi, '')
+      // Remove markdown headers: #, ##, ###, etc. at start of line
+      .replace(/^[ \t]*#+[ \t]*/gm, '')
+      // Remove any remaining hash / hashtag symbols anywhere in the text
+      .replace(/#+/g, '')
+      // Remove bold/italics syntax: ***text***, **text**, *text*, ___text___, __text__, _text_
+      .replace(/(\*{1,3}|_{1,3})([^\*_]+)\1/g, '$2')
+      // Remove strikethrough (~~text~~)
+      .replace(/~~([^~]+)~~/g, '$1')
+      // Remove blockquote indicators (> quote)
+      .replace(/^[ \t]*>[ \t]*/gm, '')
+      // Remove horizontal rules (---, ***, ___)
+      .replace(/^[ \t]*[-*_]{3,}[ \t]*$/gm, '')
+      // Remove markdown bullet points (- item, * item, + item)
+      .replace(/^[ \t]*[-*+]\s+/gm, '')
+      // Replace markdown table pipes with spaces
+      .replace(/\|/g, ' ')
+      // Remove HTML tags
+      .replace(/<[^>]*>/g, '');
+
+    // Pacing and sentence smoothing for TTS:
+    cleaned = cleaned
+      // If a line doesn't end with sentence-ending punctuation, append a period for a clean pause
+      .replace(/([^.!?\s])\n+/g, '$1. ')
+      // Replace remaining consecutive linebreaks with a space
+      .replace(/\n+/g, ' ')
+      // Collapse duplicate periods (e.g. "..")
+      .replace(/\.{2,}/g, '.')
+      // Clean up multiple spaces
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return cleaned;
+  };
+
   const speakText = (text, messageId = null) => {
     if (!('speechSynthesis' in window)) return;
 
     try {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
+      const cleaned = cleanTextForSpeech(text);
+      if (!cleaned) return;
+
+      const utterance = new SpeechSynthesisUtterance(cleaned);
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
 
@@ -727,7 +778,7 @@ export default function App() {
           streamingContent={streamingContent}
           onPromptSuggestion={(prompt) => handleSendMessage(prompt)}
           onOpenDocDrawer={() => setIsDocDrawerOpen(true)}
-          onSpeakText={(text) => speakText(text)}
+          onSpeakText={(text, id) => speakText(text, id)}
           speakingMessageId={speakingMessageId}
           onStopSpeech={stopSpeech}
           onRegenerate={handleRetryLastMessage}

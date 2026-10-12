@@ -155,7 +155,7 @@ export default function Message({
                 className={`msg-action-btn ${isSpeakingThisMessage ? 'speaking-active' : ''}`}
                 onClick={() => {
                   if (isSpeakingThisMessage) onStopSpeech();
-                  else onSpeakText(message.content);
+                  else onSpeakText(message.content, message.id);
                 }}
                 title={isSpeakingThisMessage ? 'Stop reading' : 'Read aloud'}
               >
