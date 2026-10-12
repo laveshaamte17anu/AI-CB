@@ -5,14 +5,15 @@ export default function MicButton({ isRecording, onStart, onStop, disabled }) {
   return (
     <button
       type="button"
-      className={`mic-button ${isRecording ? 'recording' : ''}`}
+      className={`tool-btn mic-tool-btn ${isRecording ? 'recording' : ''}`}
       onClick={isRecording ? onStop : onStart}
       disabled={disabled}
-      title={isRecording ? 'Stop Recording' : 'Speak via Microphone'}
+      title={isRecording ? 'Stop Recording' : 'Dictate with Microphone'}
       aria-label={isRecording ? 'Stop Recording' : 'Start Recording'}
     >
-      {isRecording ? <Square size={20} className="icon-stop" /> : <Mic size={22} className="icon-mic" />}
-      {isRecording && <span className="mic-pulse-ring"></span>}
+      {isRecording ? <Square size={14} className="icon-stop" /> : <Mic size={14} className="icon-mic" />}
+      <span>{isRecording ? 'Stop' : 'Dictate'}</span>
+      {isRecording && <span className="recording-live-indicator" />}
     </button>
   );
 }

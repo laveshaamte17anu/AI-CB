@@ -29,3 +29,27 @@ def test_build_chat_messages():
     assert messages[2]["role"] == "assistant"
     assert messages[3]["role"] == "user"
     assert messages[3]["content"] == "Who created it?"
+
+def test_build_chat_messages_modes():
+    # Coding mode
+    code_msgs = build_chat_messages("Write a binary search in Python", mode="code")
+    assert "Coding Assistant" in code_msgs[0]["content"]
+
+    # Doc mode with context
+    doc_msgs = build_chat_messages(
+        "What is the policy?",
+        mode="doc",
+        doc_context="[Source: policy.pdf, Page 1]: All employees must register."
+    )
+    assert "Document Analysis Assistant" in doc_msgs[0]["content"]
+    assert "policy.pdf" in doc_msgs[0]["content"]
+
+def test_build_chat_messages_with_memories():
+    import backend.database as db
+    mem = db.add_memory("Prefers concise bullet-point answers", category="preference")
+    try:
+        msgs = build_chat_messages("Explain Git branches", mode="chat", include_memories=True)
+        assert "Prefers concise bullet-point answers" in msgs[0]["content"]
+    finally:
+        db.delete_memory(mem["id"])
+

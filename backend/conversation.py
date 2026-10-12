@@ -1,32 +1,50 @@
-from typing import List, Dict
+from typing import List, Dict, Optional, Any
+import backend.database as db
 
 class ConversationManager:
-    """Manages session conversation history."""
-    def __init__(self, max_turns: int = 10):
-        self.history: List[Dict[str, str]] = []
+    """
+    Manages persistent conversations using SQLite with session caching.
+    """
+    def __init__(self, max_turns: int = 15):
         self.max_turns = max_turns
 
-    def add_user_message(self, content: str):
-        self.history.append({"role": "user", "content": content.strip()})
-        self._truncate()
+    def get_history(self, conversation_id: Optional[str] = None) -> List[Dict[str, str]]:
+        if not conversation_id:
+            # Fallback to latest conversation or create new
+            convs = db.list_conversations()
+            if convs:
+                conversation_id = convs[0]["id"]
+            else:
+                new_c = db.create_conversation("Default Chat")
+                conversation_id = new_c["id"]
+                
+        messages = db.get_messages(conversation_id, limit=self.max_turns * 2)
+        return [{"role": m["role"], "content": m["content"]} for m in messages]
 
-    def add_assistant_message(self, content: str):
-        self.history.append({"role": "assistant", "content": content.strip()})
-        self._truncate()
+    def add_user_message(self, content: str, conversation_id: Optional[str] = None) -> str:
+        if not conversation_id:
+            convs = db.list_conversations()
+            if convs:
+                conversation_id = convs[0]["id"]
+            else:
+                new_c = db.create_conversation("New Chat")
+                conversation_id = new_c["id"]
+        db.add_message(conversation_id, "user", content)
+        return conversation_id
 
-    def get_history(self) -> List[Dict[str, str]]:
-        return self.history
+    def add_assistant_message(self, content: str, conversation_id: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None):
+        if not conversation_id:
+            convs = db.list_conversations()
+            if convs:
+                conversation_id = convs[0]["id"]
+            else:
+                new_c = db.create_conversation("New Chat")
+                conversation_id = new_c["id"]
+        db.add_message(conversation_id, "assistant", content, metadata=metadata)
 
-    def set_history(self, history: List[Dict[str, str]]):
-        self.history = [m for m in history if isinstance(m, dict) and "role" in m and "content" in m]
-        self._truncate()
+    def clear(self, conversation_id: Optional[str] = None):
+        if conversation_id:
+            db.delete_conversation(conversation_id)
 
-    def clear(self):
-        self.history = []
-
-    def _truncate(self):
-        if len(self.history) > self.max_turns * 2:
-            self.history = self.history[-(self.max_turns * 2):]
-
-# Global session instance
+# Global singleton
 session_conversation = ConversationManager()

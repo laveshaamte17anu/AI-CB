@@ -1,12 +1,13 @@
 import React from 'react';
 
 export default function StatusIndicator({ status, statusMessage }) {
-  // Determine CSS class based on current system state
-  // States: ready, listening, transcribing, thinking, speaking, error
+  // Strip out duplicate unicode bullet characters if present
+  const cleanLabel = (statusMessage || 'Local Ready').replace(/^●\s*/, '');
+
   return (
-    <div className={`status-badge status-${status}`}>
-      <span className="status-dot"></span>
-      <span className="status-text">{statusMessage}</span>
+    <div className={`status-pill status-${status}`}>
+      <span className="status-indicator-dot" />
+      <span className="status-label">{cleanLabel}</span>
     </div>
   );
 }
