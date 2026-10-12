@@ -22,7 +22,8 @@ export default function Message({
   onStopSpeech,
   isLatest,
   onRegenerate,
-  disabled
+  disabled,
+  isStreaming = false,
 }) {
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
@@ -104,6 +105,9 @@ export default function Message({
               >
                 {message.content}
               </ReactMarkdown>
+              {isStreaming && (
+                <span className="streaming-cursor" aria-hidden="true" />
+              )}
             </div>
           )}
 

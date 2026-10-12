@@ -22,12 +22,15 @@ export default function ChatWindow({
   speakingMessageId,
   onStopSpeech,
   onRegenerate,
+  isStreaming = false,
 }) {
   const bottomRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, status, streamingContent]);
+  }, [messages, status, streamingContent, isStreaming]);
+
+  const isThinking = (status === 'thinking' || isStreaming) && !streamingContent;
 
   const renderEmptyState = () => {
     if (mode === 'code') {
@@ -175,21 +178,41 @@ export default function ChatWindow({
                   role: 'assistant',
                   content: streamingContent,
                 }}
+                isStreaming={true}
               />
             )}
 
             {/* Thinking indicator before first token */}
-            {status === 'thinking' && !streamingContent && (
-              <div className="thinking-indicator">
-                <div className="avatar assistant-avatar">
-                  <Bot size={16} />
+            {isThinking && (
+              <div className="message-row assistant-row thinking-row">
+                <div className="avatar assistant-avatar thinking-avatar">
+                  <Bot size={18} />
                 </div>
-                <div className="typing-dots">
-                  <span></span>
-                  <span></span>
-                  <span></span>
+                <div className="message-content">
+                  <div className="message-header-meta">
+                    <span className="sender-label">AI Assistant</span>
+                    <span className="thinking-badge">
+                      <Sparkles size={11} className="thinking-sparkle-icon" />
+                      <span>Thinking</span>
+                    </span>
+                  </div>
+                  <div className="message-bubble thinking-bubble">
+                    <div className="thinking-card">
+                      <div className="typing-dots-wave">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                      <span className="thinking-status-text">
+                        {mode === 'doc'
+                          ? 'Searching documents & thinking...'
+                          : mode === 'code'
+                          ? 'Analyzing code & writing solution...'
+                          : 'Thinking & formulating response...'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <span className="thinking-label">Generating local response...</span>
               </div>
             )}
           </div>

@@ -776,6 +776,7 @@ export default function App() {
           status={status}
           mode={activeMode}
           streamingContent={streamingContent}
+          isStreaming={isStreaming}
           onPromptSuggestion={(prompt) => handleSendMessage(prompt)}
           onOpenDocDrawer={() => setIsDocDrawerOpen(true)}
           onSpeakText={(text, id) => speakText(text, id)}
